@@ -20,7 +20,8 @@
 			cropUrl:'',
 			cropData:{},
 			outputUrlId:'',
-			maxSize: 1000,
+			uploadedMaxSize: 1000,
+			uploadedQuality: .92,
 			//styles
 			imgEyecandy:true,
 			imgEyecandyOpacity:0.2,
@@ -614,7 +615,7 @@
 			var that = this;
 			// Resize the image
 			var canvas = document.createElement('canvas'),
-			max_size = that.options.maxSize;
+			max_size = that.options.uploadedMaxSize;
 			width = image.width,
 			height = image.height;
 			if (width > height) {
@@ -631,7 +632,7 @@
 			that.imgInitW = that.imgW = canvas.width = width;
 			that.imgInitH = that.imgH = canvas.height = height;
 			canvas.getContext('2d').drawImage(image, 0, 0, width, height);
-			var dataUrl = canvas.toDataURL('image/jpeg');
+			var dataUrl = canvas.toDataURL('image/jpeg', that.options.uploadedQuality);
 			return dataUrl;
 		},
 		dataURLToBlob: function(dataURL) {
