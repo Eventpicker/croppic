@@ -48,7 +48,8 @@
 			onBeforeRemoveCroppedImg: null,
 			onAfterRemoveCroppedImg: null,
 			onError: null,
-			
+			onAfterInit: null,
+
 		};
 
 		// OVERWRITE DEFAULT OPTIONS
@@ -140,7 +141,7 @@
 			var that = this;
 			
 			// CREATE UPLOAD IMG FORM
-            var formHtml = '<form class="' + that.id + '_imgUploadForm" style="visibility: hidden;">  <input type="file" name="img" id="' + that.id + '_imgUploadField">  </form>';
+            var formHtml = '<form class="' + that.id + '_imgUploadForm" style="visibility: hidden;">  <input type="file" accept=".jpg,.jpeg,.png" name="img" id="' + that.id + '_imgUploadField">  </form>';
 			that.outputDiv.append(formHtml);
 			that.form = that.outputDiv.find('.'+that.id+'_imgUploadForm');
 			
@@ -267,7 +268,7 @@
 				
 				var img =$('<img src="'+ that.options.loadPicture +'">');
 				that.obj.append(img);
-				img.load(function() {
+				img.on('load', function() {
 					that.imgInitW = that.imgW = this.width;
 					that.imgInitH = that.imgH = this.height;
 					that.initCropper();
@@ -309,8 +310,7 @@
                 var img = $('<img src="'+response.url+'">')
 
 				that.obj.append(img);
-
-				img.load(function(){
+				img.on('load', function(){
 					that.initCropper();
 					that.hideLoader();
 					if (that.options.onAfterImgUpload) that.options.onAfterImgUpload.call(that);
@@ -361,6 +361,10 @@
 			if(that.options.imgEyecandy){ that.createEyecandy(); }
 			that.initDrag();
 			that.initialScaleImg();
+
+			if (typeof (that.options.onAfterInit) === typeof(Function)) {
+				that.options.onAfterInit();
+			}
 		},
 		createEyecandy: function(){
 			var that = this;
@@ -606,9 +610,15 @@
 		},
 		crop:function(){
 			var that = this;
-			
-			if (that.options.onBeforeImgCrop) that.options.onBeforeImgCrop.call(that);
-			
+
+			if (that.options.onBeforeImgCrop) {
+			    var result = that.options.onBeforeImgCrop.call(that);
+			    if(!result) {
+			        this.reset();
+			        return;
+                }
+            }
+
 			that.cropControlsCrop.hide();
 			that.showLoader();
 	
@@ -669,19 +679,45 @@
 							formData.append( key , that.options.cropData[key] );
 					}
 				}
-				
+
+				var loaderName = "loaderOf_" + this.id;
+				var first = false;
 				$.ajax({
 					url: that.options.cropUrl,
 					data: formData,
 					context: document.body,
+					headers: {
+						'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+					},
 					cache: false,
 					contentType: false,
 					processData: false,
-					type: 'POST'				
+					type: 'POST',
+					 // Custom XMLHttpRequest
+					xhr: function () {
+						var myXhr = $.ajaxSettings.xhr();
+						if (myXhr.upload) {
+							// For handling the progress of the upload
+							myXhr.upload.addEventListener('progress', function (e) {
+								if (e.lengthComputable) {
+									if(first){
+										document.getElementById(loaderName)['text'] = Math.round((e.loaded / e.total) * 100);
+									}else {
+										$("#croppicModal").hide();
+										first = true;
+										document.getElementById(loaderName).start();
+									}
+								}
+							}, false);
+						}
+						return myXhr;
+					}
 				}).always(function (data) {
-
 					that.afterCrop(data);
-
+				}).fail(function (){
+					document.getElementById(loaderName).stop(false);
+				}).done(function() {
+					document.getElementById(loaderName).stop();
 				});
 			}
 						
