@@ -1,0 +1,9 @@
+{
+  "name": "croppic",
+  "version": "1.0.0",
+  "repository": "https://github.com/Eventpicker/croppic.git",
+  "description": "Crop Libary",
+  "main": "croppic.js",
+  "author": "Thomas Brunmüller (@eventpicker)",
+  "license": "MIT"
+}
