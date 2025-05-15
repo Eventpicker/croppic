@@ -37,7 +37,8 @@
 			processInline: false,
 			loadPicture:'',
 			onReset: null,
-			enableMousescroll: false, 			
+			enableMousescroll: false, 	
+			enableImageClickUpload: false,			
 			
 			//callbacks
 			onBeforeImgUpload: null,
@@ -159,7 +160,19 @@
                     //Trigger iframe file input click, otherwise access restriction error
                     that.iframeform.find('input[type="file"]').trigger('click');
                 }									
-			});						
+			});			
+			
+			if(that.options.enableImageClickUpload){
+				that.outputDiv[0].style.cursor = "pointer";
+				that.outputDiv.off('click');
+				that.outputDiv.on('click',function(ev){ 
+					if([that.outputDiv[0], that.croppedImg[0]].includes(ev.target)){
+						that.imgUploadControl.click();
+					}
+				});	
+			}else{
+				that.outputDiv[0].style.cursor = "auto";
+			}
 			
 			if( !$.isEmptyObject(that.croppedImg)){
 			
